@@ -2,120 +2,104 @@
  * HomePage
  *
  * This is the first thing users see of our App, at the '/' route
+ *
+ * NOTE: while this component should technically be a stateless functional
+ * component (SFC), hot reloading does not currently support SFCs. If hot
+ * reloading is not a necessity for you then you can refactor it and remove
+ * the linting exception.
  */
 
-import React from 'react';
-import Helmet from 'react-helmet';
-import { FormattedMessage } from 'react-intl';
-import { connect } from 'react-redux';
-import { createStructuredSelector } from 'reselect';
+ import React from 'react';
+ import { FormattedMessage } from 'react-intl';
+ import messages from './messages';
 
-import { makeSelectRepos, makeSelectLoading, makeSelectError } from 'containers/App/selectors';
-import H2 from 'components/H2';
-import ReposList from 'components/ReposList';
-import AtPrefix from './AtPrefix';
-import CenteredSection from './CenteredSection';
-import Form from './Form';
-import Input from './Input';
-import Section from './Section';
-import messages from './messages';
-import { loadRepos } from '../App/actions';
-import { changeUsername } from './actions';
-import { makeSelectUsername } from './selectors';
+export default class HomePage extends React.PureComponent { // eslint-disable-line react/prefer-stateless-function
 
-export class HomePage extends React.PureComponent { // eslint-disable-line react/prefer-stateless-function
-  /**
-   * when initial state username is not null, submit the form to load repos
-   */
-  componentDidMount() {
-    if (this.props.username && this.props.username.trim().length > 0) {
-      this.props.onSubmitForm();
+    componentDidMount(){
+        var now = new Date();
+        var startOfDay = new Date(now.getFullYear(), now.getMonth()  , now.getDate() +1);
+        var startOfDay1 = new Date(now.getFullYear(), now.getMonth()  , now.getDate() );
+        var now = startOfDay / 1000;
+        var now1 = startOfDay1 / 1000;
+        let  tag = 'C++'
+        let express = 'https://api.stackexchange.com/2.2/questions?page=1&pagesize=100&fromdate='+now1+'&todate='+now+'&order=desc&sort=activity&tagged='+tag+'&site=stackoverflow'
+        let arr = []
+
+        fetch(express)
+        .then((response) => response.json())
+        .then((responseJson) => {
+            let filteredPlans = responseJson.items.filter((plan) => { return plan.is_answered == true  })
+            let accepted_answer_id = filteredPlans.filter((plan1) => { return plan1.accepted_answer_id   })
+            arr[0] = responseJson.items.length
+            arr[1] = filteredPlans.length
+            arr[2] = accepted_answer_id.length
+            this.setState({cData:arr})
+            console.log("arr",arr)
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+
+        tag = 'Javascript'
+        express = 'https://api.stackexchange.com/2.2/questions?page=1&pagesize=100&fromdate='+now1+'&todate='+now+'&order=desc&sort=activity&tagged='+tag+'&site=stackoverflow'
+        fetch(express)
+        .then((response) => response.json())
+        .then((responseJson) => {
+            let filteredPlans = responseJson.items.filter((plan) => { return plan.is_answered == true  })
+            let accepted_answer_id = filteredPlans.filter((plan1) => { return plan1.accepted_answer_id   })
+            arr = []
+            arr[0] = responseJson.items.length
+            arr[1] = filteredPlans.length
+            arr[2] = accepted_answer_id.length
+            this.setState({jsData:arr})
+            console.log("js arr",arr)
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+
+
+        tag = 'Ruby'
+        express = 'https://api.stackexchange.com/2.2/questions?page=1&pagesize=100&fromdate='+now1+'&todate='+now+'&order=desc&sort=activity&tagged='+tag+'&site=stackoverflow'
+        fetch(express)
+        .then((response) => response.json())
+        .then((responseJson) => {
+            let filteredPlans = responseJson.items.filter((plan) => { return plan.is_answered == true  })
+            let accepted_answer_id = filteredPlans.filter((plan1) => { return plan1.accepted_answer_id   })
+            arr = []
+            arr[0] = responseJson.items.length
+            arr[1] = filteredPlans.length
+            arr[2] = accepted_answer_id.length
+            this.setState({rubyData:arr})
+            console.log("ruby arr",arr)
+        })
+        .catch((error) => {
+            console.log(error);
+        })
     }
-  }
 
-  render() {
-    const { loading, error, repos } = this.props;
-    const reposListProps = {
-      loading,
-      error,
-      repos,
-    };
-
-    return (
-      <article>
-        <Helmet
-          title="Home Page"
-          meta={[
-            { name: 'description', content: 'A React.js Boilerplate application homepage' },
-          ]}
-        />
-        <div>
-          <CenteredSection>
-            <H2>
-              <FormattedMessage {...messages.startProjectHeader} />
-            </H2>
-            <p>
-              <FormattedMessage {...messages.startProjectMessage} />
-            </p>
-          </CenteredSection>
-          <Section>
-            <H2>
-              <FormattedMessage {...messages.trymeHeader} />
-            </H2>
-            <Form onSubmit={this.props.onSubmitForm}>
-              <label htmlFor="username">
-                <FormattedMessage {...messages.trymeMessage} />
-                <AtPrefix>
-                  <FormattedMessage {...messages.trymeAtPrefix} />
-                </AtPrefix>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="mxstbr"
-                  value={this.props.username}
-                  onChange={this.props.onChangeUsername}
-                />
-              </label>
-            </Form>
-            <ReposList {...reposListProps} />
-          </Section>
-        </div>
-      </article>
-    );
-  }
-}
-
-HomePage.propTypes = {
-  loading: React.PropTypes.bool,
-  error: React.PropTypes.oneOfType([
-    React.PropTypes.object,
-    React.PropTypes.bool,
-  ]),
-  repos: React.PropTypes.oneOfType([
-    React.PropTypes.array,
-    React.PropTypes.bool,
-  ]),
-  onSubmitForm: React.PropTypes.func,
-  username: React.PropTypes.string,
-  onChangeUsername: React.PropTypes.func,
-};
-
-export function mapDispatchToProps(dispatch) {
-  return {
-    onChangeUsername: (evt) => dispatch(changeUsername(evt.target.value)),
-    onSubmitForm: (evt) => {
-      if (evt !== undefined && evt.preventDefault) evt.preventDefault();
-      dispatch(loadRepos());
-    },
-  };
-}
-
-const mapStateToProps = createStructuredSelector({
-  repos: makeSelectRepos(),
-  username: makeSelectUsername(),
-  loading: makeSelectLoading(),
-  error: makeSelectError(),
-});
-
-// Wrap the component to inject dispatch and state into it
-export default connect(mapStateToProps, mapDispatchToProps)(HomePage);
+    render() {
+        console.log("this",this.state)
+        let cData = this.state ?  this.state.cData : ''
+        let rubyData = this.state ? this.state.rubyData : ''
+        let jsData = this.state ? this.state.jsData : ''
+        return (
+            <div>
+            <h1>
+            <FormattedMessage {...messages.header} />
+            </h1>
+            <ul>
+            <li> Total c++ questions :  {cData[0]?cData[0]:''} </li>
+            <li> Total c++ Answers :  {cData[0]?cData[1]:''} </li>
+            <li> Total c++ accepted answers :  {cData[0]?cData[2]:''} </li>
+            <li> Total ruby questions :  {rubyData[0]?rubyData[0]:''} </li>
+            <li> Total ruby Answers :  {rubyData[0]?rubyData[1]:''} </li>
+            <li> Total ruby accepted answers :  {rubyData[0]?rubyData[2]:''} </li>
+            <li> Total js questions :  {jsData[0]?jsData[0]:''} </li>
+            <li> Total js Answers :  {jsData[0]?jsData[1]:''} </li>
+            <li> Total js accepted answers :  {jsData[0]?jsData[2]:''} </li>
+            </ul>
+            </div>
+            );
+        }
+    }
